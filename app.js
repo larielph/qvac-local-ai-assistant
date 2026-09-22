@@ -5,29 +5,25 @@ import {
   unloadModel
 } from "@qvac/sdk";
 
-try {
-  console.log("Starting QVAC Local AI...");
+async function main() {
+  console.log("Loading local AI model...");
+  console.log("The first run may download the model.\n");
 
   const modelId = await loadModel({
     modelSrc: LLAMA_3_2_1B_INST_Q4_0,
     onProgress: (p) => {
-      const percent = p.percentage.toFixed(0);
-      process.stdout.write(`\rDownloading model: ${percent}%`);
-      
-      if (p.percentage >= 100) {
-        process.stdout.write("\n");
-      }
+      console.log(`Downloading: ${p.percentage.toFixed(0)}%`);
     }
   });
 
-  console.log("Model loaded successfully!");
-  console.log("\nQVAC Local AI response:\n");
+  console.log("\nModel loaded!");
+  console.log("Running QVAC locally...\n");
 
   const history = [
     {
       role: "user",
       content:
-        "You are a helpful local AI assistant. Introduce yourself in two short sentences and explain that you run locally on the user's device."
+        "Explain photosynthesis in simple terms for a 12-year-old student."
     }
   ];
 
@@ -37,16 +33,22 @@ try {
     stream: true
   });
 
+  let answer = "";
+
   for await (const token of result.tokenStream) {
     process.stdout.write(token);
+    answer += token;
   }
 
-  console.log("\n");
+  console.log("\n\nAI response generated locally with QVAC.");
 
-  await unloadModel({ modelId });
-
-  console.log("QVAC Local AI finished successfully!");
-} catch (error) {
-  console.error("\nQVAC error:", error);
-  process.exit(1);
+  await unloadModel({
+    modelId
+  });
 }
+
+main().catch((error) => {
+  console.error("\nQVAC error:");
+  console.error(error);
+  process.exit(1);
+});
